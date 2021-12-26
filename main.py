@@ -3,6 +3,7 @@ from time import strftime
 
 import psnawp_api
 import requests
+from dotenv import load_dotenv
 from pincer import Client
 from pincer.commands import command
 from pincer.objects import MessageContext
@@ -44,6 +45,7 @@ class GamerTagIDGrabber(Client):
 
 
 def main():
+    load_dotenv('config.env')
     psnawp = psnawp_api.psnawp.PSNAWP(os.getenv('NPSSO_CODE'))
     bot = GamerTagIDGrabber(os.getenv("TOKEN"), psnawp)
     bot.run()
