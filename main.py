@@ -25,6 +25,7 @@ class GamerTagIDGrabber(Client):
             params = {'gt': gamer_tag.strip()}
             response = requests.get('https://xbl.io/api/v2/friends/search', headers=auth_headers, params=params)
             json_response = response.json()
+            await ctx.interaction.ack()
             if profile_list := json_response.get('profileUsers'):
                 await ctx.reply("\n".join(f"{profile['settings'][2]['value']}: {profile['id']}" for profile in profile_list))
             else:
@@ -37,6 +38,7 @@ class GamerTagIDGrabber(Client):
         if ctx.channel_id == 924193319507079238:
             try:
                 user = self.psnawp.user(online_id=gamer_tag)
+                await ctx.interaction.ack()
                 await ctx.reply(f"{user.online_id}: {user.account_id}")
             except Exception:
                 await ctx.reply(f"GamerTag {gamer_tag} not found.")
