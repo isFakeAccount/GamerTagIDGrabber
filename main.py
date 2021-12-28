@@ -33,7 +33,7 @@ class GamerTagIDGrabber(Client):
         else:
             await ctx.reply("The command only works in the #gamer-tag-id-grabber channel.")
 
-    @command(name="psnid", description="Get PSNID from XBOX GamerTag", guild="793952307103662102")
+    @command(name="psnid", description="Get PSNID from PlayStation GamerTag", guild="793952307103662102")
     async def grab_psnid(self, ctx: MessageContext, gamer_tag: str):
         if ctx.channel_id == 924193319507079238:
             try:
