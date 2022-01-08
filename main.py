@@ -3,6 +3,7 @@ import os
 import discord
 import psnawp_api
 import requests
+from dotenv import load_dotenv
 
 bot = discord.Bot()
 
@@ -45,5 +46,6 @@ def main():
 
 
 if __name__ == '__main__':
+    load_dotenv('config.env')
     psnawp = psnawp_api.psnawp.PSNAWP(os.getenv('NPSSO_CODE'))
     main()
