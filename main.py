@@ -1,3 +1,4 @@
+import logging
 import os
 
 import discord
@@ -10,16 +11,19 @@ bot = discord.Bot()
 
 @bot.event
 async def on_ready():
-    print(f"We have logged in as {bot.user}")
+    logger.info(f"We have logged in as Discord User {bot.user}.")
 
 
 @bot.slash_command(guild_ids=[793952307103662102])
 async def grab_xuid(ctx, gamer_tag: str):
     if ctx.channel_id == 924193319507079238:
+        logger.info(f"Received XBOX gamertag: {gamer_tag.strip()}.")
         auth_headers = {"X-Authorization": os.getenv("XBOX_API")}
         params = {'gt': gamer_tag.strip()}
         response = requests.get('https://xbl.io/api/v2/friends/search', headers=auth_headers, params=params)
         json_response = response.json()
+        logger.info(f"XBOX API response {json_response}.")
+
         if profile_list := json_response.get('profileUsers'):
             await ctx.respond(
                 "\n".join(f"{profile['settings'][2]['value']}: {profile['id']}" for profile in profile_list))
@@ -31,9 +35,11 @@ async def grab_xuid(ctx, gamer_tag: str):
 
 @bot.slash_command(guild_ids=[793952307103662102])
 async def grab_psnid(ctx, gamer_tag: str):
+    logger.info(f"Received PSN gamertag: {gamer_tag.strip()}.")
     if ctx.channel_id == 924193319507079238:
         try:
             user = psnawp.user(online_id=gamer_tag)
+            logger.info(f"Response PSN {user}.")
             await ctx.respond(f"{user.online_id}: {user.account_id}")
         except Exception:
             await ctx.respond(f"GamerTag {gamer_tag} not found.")
@@ -48,4 +54,15 @@ def main():
 if __name__ == '__main__':
     load_dotenv('config.env')
     psnawp = psnawp_api.psnawp.PSNAWP(os.getenv('NPSSO_CODE'))
+    logger = logging.getLogger("GammerTagIDGrabber")
+    logger.setLevel(logging.DEBUG)
+
+    log_stream = logging.StreamHandler()
+    log_stream.setLevel(logging.INFO)
+    formatter = logging.Formatter('[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s')
+    log_stream.setFormatter(formatter)
+    logger.addHandler(log_stream)
+
+    client = psnawp.me()
+    logger.info(f"Logged in as PSN ID: {client.get_online_id()}.")
     main()
