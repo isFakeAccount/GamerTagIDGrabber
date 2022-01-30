@@ -14,7 +14,7 @@ async def on_ready():
     logger.info(f"We have logged in as Discord User {bot.user}.")
 
 
-@bot.slash_command(guild_ids=[793952307103662102])
+@bot.slash_command(description="To grab the XUID of XBOX user.", guild_ids=[793952307103662102])
 async def grab_xuid(ctx, gamer_tag: str):
     if ctx.channel_id == 924193319507079238:
         await ctx.response.defer()
@@ -34,7 +34,7 @@ async def grab_xuid(ctx, gamer_tag: str):
         await ctx.respond("The command only works in the #gamer-tag-id-grabber channel.")
 
 
-@bot.slash_command(guild_ids=[793952307103662102])
+@bot.slash_command(description="To grab the PSNID of PSN user.", guild_ids=[793952307103662102])
 async def grab_psnid(ctx, gamer_tag: str):
     logger.info(f"Received PSN gamertag: {gamer_tag.strip()}.")
     if ctx.channel_id == 924193319507079238:
