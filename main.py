@@ -1,9 +1,9 @@
 import logging
 import os
 
+import aiohttp
 import discord
 import psnawp_api
-import requests
 from dotenv import load_dotenv
 
 bot = discord.Bot()
@@ -17,18 +17,19 @@ async def on_ready():
 @bot.slash_command(guild_ids=[793952307103662102])
 async def grab_xuid(ctx, gamer_tag: str):
     if ctx.channel_id == 924193319507079238:
+        await ctx.response.defer()
         logger.info(f"Received XBOX gamertag: {gamer_tag.strip()}.")
         auth_headers = {"X-Authorization": os.getenv("XBOX_API")}
         params = {'gt': gamer_tag.strip()}
-        response = requests.get('https://xbl.io/api/v2/friends/search', headers=auth_headers, params=params)
-        json_response = response.json()
-        logger.info(f"XBOX API response {json_response}.")
-
-        if profile_list := json_response.get('profileUsers'):
-            await ctx.respond(
-                "\n".join(f"{profile['settings'][2]['value']}: {profile['id']}" for profile in profile_list))
-        else:
-            await ctx.respond(f"GamerTag {gamer_tag} not found.")
+        async with aiohttp.ClientSession() as session:
+            async with session.get('https://xbl.io/api/v2/friends/search', headers=auth_headers, params=params) as resp:
+                json_response = await resp.json()
+                logger.info(f"XBOX API response {json_response}.")
+                if profile_list := json_response.get('profileUsers'):
+                    await ctx.respond(
+                        "\n".join(f"{profile['settings'][2]['value']}: {profile['id']}" for profile in profile_list))
+                else:
+                    await ctx.respond(f"GamerTag {gamer_tag} not found.")
     else:
         await ctx.respond("The command only works in the #gamer-tag-id-grabber channel.")
 
