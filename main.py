@@ -58,7 +58,7 @@ async def grab_psnid(ctx, gamer_tag: str):
         await ctx.respond(f"GamerTag {gamer_tag} not found.")
 
 
-@bot.slash_command(description="To grab the PSNID of PSN user.", guild_ids=[793952307103662102])
+@bot.slash_command(description="Gets the gamertag from PSNID.", guild_ids=[793952307103662102])
 async def psnid_to_gamertag(ctx, psnid: str):
     logger.info(f"Received PSNID: {psnid.strip()}.")
     try:
