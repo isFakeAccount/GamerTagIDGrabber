@@ -16,36 +16,30 @@ async def on_ready():
 
 @bot.slash_command(description="To grab the XUID of XBOX user.", guild_ids=[793952307103662102])
 async def grab_xuid(ctx, gamer_tag: str):
-    if ctx.channel_id == 924193319507079238:
-        await ctx.response.defer()
-        logger.info(f"Received XBOX gamertag: {gamer_tag.strip()}.")
-        auth_headers = {"X-Authorization": os.getenv("XBOX_API")}
-        params = {'gt': gamer_tag.strip()}
-        async with aiohttp.ClientSession() as session:
-            async with session.get('https://xbl.io/api/v2/friends/search', headers=auth_headers, params=params) as resp:
-                json_response = await resp.json()
-                logger.info(f"XBOX API response {json_response}.")
-                if profile_list := json_response.get('profileUsers'):
-                    await ctx.respond(
-                        "\n".join(f"{profile['settings'][2]['value']}: {profile['id']}" for profile in profile_list))
-                else:
-                    await ctx.respond(f"GamerTag {gamer_tag} not found.")
-    else:
-        await ctx.respond("The command only works in the #gamer-tag-id-grabber channel.")
+    await ctx.response.defer()
+    logger.info(f"Received XBOX gamertag: {gamer_tag.strip()}.")
+    auth_headers = {"X-Authorization": os.getenv("XBOX_API")}
+    params = {'gt': gamer_tag.strip()}
+    async with aiohttp.ClientSession() as session:
+        async with session.get('https://xbl.io/api/v2/friends/search', headers=auth_headers, params=params) as resp:
+            json_response = await resp.json()
+            logger.info(f"XBOX API response {json_response}.")
+            if profile_list := json_response.get('profileUsers'):
+                await ctx.respond(
+                    "\n".join(f"{profile['settings'][2]['value']}: {profile['id']}" for profile in profile_list))
+            else:
+                await ctx.respond(f"GamerTag {gamer_tag} not found.")
 
 
 @bot.slash_command(description="To grab the PSNID of PSN user.", guild_ids=[793952307103662102])
 async def grab_psnid(ctx, gamer_tag: str):
     logger.info(f"Received PSN gamertag: {gamer_tag.strip()}.")
-    if ctx.channel_id == 924193319507079238:
-        try:
-            user = psnawp.user(online_id=gamer_tag)
-            logger.info(f"Response PSN {user}.")
-            await ctx.respond(f"{user.online_id}: {user.account_id}")
-        except Exception:
-            await ctx.respond(f"GamerTag {gamer_tag} not found.")
-    else:
-        await ctx.respond("The command only works in the #gamer-tag-id-grabber channel.")
+    try:
+        user = psnawp.user(online_id=gamer_tag)
+        logger.info(f"Response PSN {user}.")
+        await ctx.respond(f"{user.online_id}: {user.account_id}")
+    except Exception:
+        await ctx.respond(f"GamerTag {gamer_tag} not found.")
 
 
 def main():
