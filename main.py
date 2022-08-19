@@ -31,6 +31,22 @@ async def grab_xuid(ctx, gamer_tag: str):
                 await ctx.respond(f"GamerTag {gamer_tag} not found.")
 
 
+@bot.slash_command(description="Gets the GamerTag from XUID", guild_ids=[793952307103662102])
+async def xuid_to_gamertag(ctx, xuid: str):
+    await ctx.response.defer()
+    logger.info(f"Received XBOX gamertag: {xuid.strip()}.")
+    auth_headers = {"X-Authorization": os.getenv("XBOX_API")}
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f'https://xbl.io/api/v2/account/{xuid}', headers=auth_headers) as resp:
+            json_response = await resp.json()
+            logger.info(f"XBOX API response {json_response}.")
+            if profile_list := json_response.get('profileUsers'):
+                await ctx.respond(
+                    "\n".join(f"{profile['settings'][2]['value']}: {profile['id']}" for profile in profile_list))
+            else:
+                await ctx.respond(f"XUID {xuid} not found.")
+
+
 @bot.slash_command(description="To grab the PSNID of PSN user.", guild_ids=[793952307103662102])
 async def grab_psnid(ctx, gamer_tag: str):
     logger.info(f"Received PSN gamertag: {gamer_tag.strip()}.")
@@ -40,6 +56,17 @@ async def grab_psnid(ctx, gamer_tag: str):
         await ctx.respond(f"{user.online_id}: {user.account_id}")
     except Exception:
         await ctx.respond(f"GamerTag {gamer_tag} not found.")
+
+
+@bot.slash_command(description="To grab the PSNID of PSN user.", guild_ids=[793952307103662102])
+async def psnid_to_gamertag(ctx, psnid: str):
+    logger.info(f"Received PSNID: {psnid.strip()}.")
+    try:
+        user = psnawp.user(account_id=psnid)
+        logger.info(f"Response PSN {user}.")
+        await ctx.respond(f"{user.online_id}: {user.account_id}")
+    except Exception:
+        await ctx.respond(f"PSNID {psnid} not found.")
 
 
 def main():
