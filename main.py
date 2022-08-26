@@ -36,6 +36,7 @@ async def grab_xuid(ctx, gamer_tag: str):
         except (ContentTypeError, JSONDecodeError, KeyError):
             if i == 1:
                 await ctx.respond(f"Something wrong with XBOX API, try again later.")
+                logger.error("Something wrong with XBOX API", stack_info=True)
 
 
 @bot.include
