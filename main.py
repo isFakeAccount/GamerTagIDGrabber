@@ -1,12 +1,13 @@
 import logging
 import os
+import re
 from json import JSONDecodeError
 
 import aiohttp
 import crescent
-import psnawp_api
 from aiohttp import ContentTypeError
 from dotenv import load_dotenv
+from psnawp_api import PSNAWP
 
 load_dotenv('config.env')
 bot = crescent.Bot(os.getenv('TOKEN'))
@@ -14,11 +15,11 @@ bot = crescent.Bot(os.getenv('TOKEN'))
 
 @bot.include
 @crescent.command(description="To grab the XUID of XBOX user.", guild=793952307103662102)
-async def grab_xuid(ctx, gamer_tag: str):
+async def grab_xuid(ctx: crescent.Context, gamer_tag: str):
     await ctx.defer()
-    logger.info(f"Received XBOX gamertag: {gamer_tag.strip()}.")
+    logger.info(f"Received XBOX gamertag: {gamer_tag}.")
     auth_headers = {"X-Authorization": os.getenv("XBOX_API")}
-    params = {'gt': gamer_tag.strip()}
+    params = {'gt': gamer_tag}
 
     # Retries the search two times before giving up.
     for i in range(2):
@@ -41,12 +42,12 @@ async def grab_xuid(ctx, gamer_tag: str):
 
 @bot.include
 @crescent.command(description="Gets the GamerTag from XUID", guild=793952307103662102)
-async def xuid_to_gamertag(ctx, xuid: str):
+async def xuid_to_gamertag(ctx: crescent.Context, xuid: int):
     await ctx.defer()
-    logger.info(f"Received XBOX gamertag: {xuid.strip()}.")
+    logger.info(f"Received XBOX gamertag: {xuid}.")
     auth_headers = {"X-Authorization": os.getenv("XBOX_API")}
     async with aiohttp.ClientSession(headers=auth_headers) as session:
-        async with session.get(f'https://xbl.io/api/v2/account/{xuid.strip()}') as resp:
+        async with session.get(f'https://xbl.io/api/v2/account/{xuid}') as resp:
             json_response = await resp.json()
             logger.info(f"XBOX API response {json_response}.")
             if profile_list := json_response.get('profileUsers'):
@@ -58,10 +59,10 @@ async def xuid_to_gamertag(ctx, xuid: str):
 
 @bot.include
 @crescent.command(description="To grab the PSNID of PSN user.", guild=793952307103662102)
-async def grab_psnid(ctx, gamer_tag: str):
-    logger.info(f"Received PSN gamertag: {gamer_tag.strip()}.")
+async def grab_psnid(ctx: crescent.Context, gamer_tag: str):
+    logger.info(f"Received PSN gamertag: {gamer_tag}.")
     try:
-        user = psnawp.user(online_id=gamer_tag.strip())
+        user = psnawp.user(online_id=gamer_tag)
         logger.info(f"Response PSN {user}.")
         await ctx.respond(f"{user.online_id}: {user.account_id}")
     except Exception:
@@ -70,10 +71,14 @@ async def grab_psnid(ctx, gamer_tag: str):
 
 @bot.include
 @crescent.command(description="Gets the gamertag from PSNID.", guild=793952307103662102)
-async def psnid_to_gamertag(ctx, psnid: str):
-    logger.info(f"Received PSNID: {psnid.strip()}.")
+async def psnid_to_gamertag(ctx: crescent.Context, psnid: str):
+    if not re.match(r"\d{19}", psnid):
+        await ctx.respond(f"{psnid} is not correct PSN ID.")
+        return
+
+    logger.info(f"Received PSNID: {psnid}.")
     try:
-        user = psnawp.user(account_id=psnid.strip())
+        user = psnawp.user(account_id=f"{psnid}")
         logger.info(f"Response PSN {user}.")
         await ctx.respond(f"{user.online_id}: {user.account_id}")
     except Exception:
@@ -85,7 +90,7 @@ def main():
 
 
 if __name__ == '__main__':
-    psnawp = psnawp_api.psnawp.PSNAWP(os.getenv('NPSSO_CODE'))
+    psnawp = PSNAWP(os.getenv('NPSSO_CODE'))
     logger = logging.getLogger("GammerTagIDGrabber")
     logger.setLevel(logging.DEBUG)
 
@@ -96,5 +101,5 @@ if __name__ == '__main__':
     logger.addHandler(log_stream)
 
     client = psnawp.me()
-    logger.info(f"Logged in as PSN ID: {client.get_online_id()}.")
+    logger.info(f"Logged in as PSN ID: {client.online_id}.")
     main()
