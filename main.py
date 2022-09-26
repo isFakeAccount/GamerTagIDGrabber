@@ -21,7 +21,11 @@ async def grab_xuid(ctx: crescent.Context, gamer_tag: str):
     auth_headers = {"X-Authorization": os.getenv("XBOX_API")}
     params = {'gt': gamer_tag}
 
-    # Retries the search two times before giving up.
+    if not re.match(r"[A-Za-z0-9]+", gamer_tag):
+        await ctx.respond(f"{gamer_tag} is not XBOX 360 compatible GamerTag")
+        return
+
+        # Retries the search two times before giving up.
     for i in range(2):
         try:
             async with aiohttp.ClientSession(headers=auth_headers) as session:
