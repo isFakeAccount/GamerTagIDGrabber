@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import traceback
 from json import JSONDecodeError
 
 import aiohttp
@@ -8,6 +9,7 @@ import crescent
 from aiohttp import ContentTypeError
 from dotenv import load_dotenv
 from psnawp_api import PSNAWP
+from psnawp_api.core.psnawp_exceptions import PSNAWPNotFound
 
 load_dotenv('config.env')
 bot = crescent.Bot(os.getenv('TOKEN'))
@@ -69,8 +71,10 @@ async def grab_psnid(ctx: crescent.Context, gamer_tag: str):
         user = psnawp.user(online_id=gamer_tag)
         logger.info(f"Response PSN {user}.")
         await ctx.respond(f"{user.online_id}: {user.account_id}")
-    except Exception:
+    except PSNAWPNotFound:
         await ctx.respond(f"GamerTag {gamer_tag} not found.")
+    except Exception:
+        await ctx.respond(traceback.format_exc(1))
 
 
 @bot.include
@@ -85,8 +89,10 @@ async def psnid_to_gamertag(ctx: crescent.Context, psnid: str):
         user = psnawp.user(account_id=f"{psnid}")
         logger.info(f"Response PSN {user}.")
         await ctx.respond(f"{user.online_id}: {user.account_id}")
-    except Exception:
+    except PSNAWPNotFound:
         await ctx.respond(f"PSNID {psnid} not found.")
+    except Exception:
+        await ctx.respond(traceback.format_exc(1))
 
 
 def main():
