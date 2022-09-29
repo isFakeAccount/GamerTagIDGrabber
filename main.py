@@ -74,6 +74,7 @@ async def grab_psnid(ctx: crescent.Context, gamer_tag: str):
     except PSNAWPNotFound:
         await ctx.respond(f"GamerTag {gamer_tag} not found.")
     except Exception:
+        traceback.print_exc()
         await ctx.respond(traceback.format_exc(1))
 
 
@@ -92,6 +93,7 @@ async def psnid_to_gamertag(ctx: crescent.Context, psnid: str):
     except PSNAWPNotFound:
         await ctx.respond(f"PSNID {psnid} not found.")
     except Exception:
+        traceback.print_exc()
         await ctx.respond(traceback.format_exc(1))
 
 
