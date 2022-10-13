@@ -124,7 +124,12 @@ async def delete_reddit_user(ctx: crescent.Context, reddit: Atd[str, "Reddit Use
     async with ClientSession(headers={"X-API-Key": os.getenv("PROJECT_KEY"), 'Content-Type': 'application/json'}) as session:
         async with session.delete(f"{root_uri}/items/{reddit.lower()}") as resp:
             json_data = await resp.json()
-            await ctx.respond(json.dumps(json_data, sort_keys=True, indent=4))
+            formatted_json = \
+                f"""
+                ```json\n{json.dumps(json_data, sort_keys=True, indent=4)}
+                ```
+                """
+            await ctx.respond(formatted_json)
 
 
 @bot.include
@@ -150,7 +155,13 @@ async def grab_user_info(ctx: crescent.Context,
         result = await query_items(key="Fallout 76", value=pc)
     else:
         result = "Nothing was passed as argument."
-    await ctx.respond(json.dumps(result, sort_keys=True, indent=4))
+
+    formatted_json = \
+        f"""
+        ```json\n{json.dumps(result, sort_keys=True, indent=4)}
+        ```
+        """
+    await ctx.respond(formatted_json)
 
 
 def main():
