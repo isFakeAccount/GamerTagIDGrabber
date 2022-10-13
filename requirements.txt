@@ -10,11 +10,11 @@ croniter==1.3.5
 forbiddenfruit==0.1.4
 frozenlist==1.3.1
 hikari==2.0.0.dev110
-hikari-crescent==0.3.3
+hikari-crescent==0.3.5
 idna==3.4
 multidict==6.0.2
 mypy-extensions==0.4.3
-PSNAWP==1.0.1
+PSNAWP==1.0.2
 pycooldown==0.1.0b8
 python-dateutil==2.8.2
 python-dotenv==0.20.0

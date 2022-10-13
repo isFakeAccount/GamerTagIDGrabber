@@ -1,12 +1,15 @@
+import json
 import logging
 import os
 import re
 import traceback
 from json import JSONDecodeError
+from typing import Annotated as Atd
+from typing import Optional
 
 import aiohttp
 import crescent
-from aiohttp import ContentTypeError
+from aiohttp import ContentTypeError, ClientSession
 from dotenv import load_dotenv
 from psnawp_api import PSNAWP
 from psnawp_api.core.psnawp_exceptions import PSNAWPNotFound
@@ -17,7 +20,7 @@ bot = crescent.Bot(os.getenv('TOKEN'))
 
 @bot.include
 @crescent.command(description="To grab the XUID of XBOX user.", guild=793952307103662102)
-async def grab_xuid(ctx: crescent.Context, gamer_tag: str):
+async def grab_xuid(ctx: crescent.Context, gamer_tag: Atd[str, "XBOX 360 GamerTag"]):
     await ctx.defer()
     logger.info(f"Received XBOX gamertag: {gamer_tag}.")
     auth_headers = {"X-Authorization": os.getenv("XBOX_API")}
@@ -48,7 +51,7 @@ async def grab_xuid(ctx: crescent.Context, gamer_tag: str):
 
 @bot.include
 @crescent.command(description="Gets the GamerTag from XUID", guild=793952307103662102)
-async def xuid_to_gamertag(ctx: crescent.Context, xuid: int):
+async def xuid_to_gamertag(ctx: crescent.Context, xuid: Atd[int, "XBOX User ID"]):
     await ctx.defer()
     logger.info(f"Received XBOX gamertag: {xuid}.")
     auth_headers = {"X-Authorization": os.getenv("XBOX_API")}
@@ -65,7 +68,7 @@ async def xuid_to_gamertag(ctx: crescent.Context, xuid: int):
 
 @bot.include
 @crescent.command(description="To grab the PSNID of PSN user.", guild=793952307103662102)
-async def grab_psnid(ctx: crescent.Context, gamer_tag: str):
+async def grab_psnid(ctx: crescent.Context, gamer_tag: Atd[str, "PlayStation GamerTag"]):
     logger.info(f"Received PSN gamertag: {gamer_tag}.")
     try:
         user = psnawp.user(online_id=gamer_tag)
@@ -80,7 +83,7 @@ async def grab_psnid(ctx: crescent.Context, gamer_tag: str):
 
 @bot.include
 @crescent.command(description="Gets the gamertag from PSNID.", guild=793952307103662102)
-async def psnid_to_gamertag(ctx: crescent.Context, psnid: str):
+async def psnid_to_gamertag(ctx: crescent.Context, psnid: Atd[str, "PlayStation User ID"]):
     if not re.match(r"\d{19}", psnid):
         await ctx.respond(f"{psnid} is not correct PSN ID.")
         return
@@ -95,6 +98,59 @@ async def psnid_to_gamertag(ctx: crescent.Context, psnid: str):
     except Exception:
         traceback.print_exc()
         await ctx.respond(traceback.format_exc(1))
+
+
+async def get_item(key: str):
+    root_uri = f"https://database.deta.sh/v1/{os.getenv('PROJECT_ID')}/fallout_76_db"
+    async with ClientSession(headers={"X-API-Key": os.getenv("PROJECT_KEY"), 'Content-Type': 'application/json'}) as session:
+        async with session.get(f"{root_uri}/items/{key}") as resp:
+            json_data = await resp.json()
+            return json_data
+
+
+async def query_items(key: str, value: str):
+    root_uri = f"https://database.deta.sh/v1/{os.getenv('PROJECT_ID')}/fallout_76_db"
+    async with ClientSession(headers={"X-API-Key": os.getenv("PROJECT_KEY"), 'Content-Type': 'application/json'}) as session:
+        payload = json.dumps({"query": [{key: value}], "limit": 5, "last": None})
+        async with session.post(f"{root_uri}/query", data=payload) as resp:
+            json_data = await resp.json()
+            return json_data.get("items")
+
+
+@bot.include
+@crescent.command(description="Deletes the Reddit user from database. Use this command with caution.", guild=793952307103662102)
+async def delete_reddit_user(ctx: crescent.Context, reddit: Atd[str, "Reddit Username"]):
+    root_uri = f"https://database.deta.sh/v1/{os.getenv('PROJECT_ID')}/fallout_76_db"
+    async with ClientSession(headers={"X-API-Key": os.getenv("PROJECT_KEY"), 'Content-Type': 'application/json'}) as session:
+        async with session.delete(f"{root_uri}/items/{reddit.lower()}") as resp:
+            json_data = await resp.json()
+            await ctx.respond(json.dumps(json_data, sort_keys=True, indent=4))
+
+
+@bot.include
+@crescent.command(description="Grabs user info from user verification database", guild=793952307103662102)
+async def grab_user_info(ctx: crescent.Context,
+                         reddit: Atd[Optional[str], "Reddit Username"] = None,
+                         psn: Atd[Optional[str], "PlayStation GamerTag"] = None,
+                         psnid: Atd[Optional[str], "PlayStation User ID"] = None,
+                         xbl: Atd[Optional[str], "XBOX 360 GamerTag"] = None,
+                         xuid: Atd[Optional[str], "XBOX User ID"] = None,
+                         pc: Atd[Optional[str], "Reddit Username"] = None):
+    if reddit is not None:
+        result = await get_item(reddit.lower())
+    elif psn is not None:
+        result = await query_items(key="PlayStation", value=psn)
+    elif psnid is not None:
+        result = await query_items(key="PlayStation_ID", value=psnid)
+    elif xbl is not None:
+        result = await query_items(key="XBOX", value=xbl)
+    elif xuid is not None:
+        result = await query_items(key="XBOX_ID", value=xuid)
+    elif pc is not None:
+        result = await query_items(key="Fallout 76", value=pc)
+    else:
+        result = "Nothing was passed as argument."
+    await ctx.respond(json.dumps(result, sort_keys=True, indent=4))
 
 
 def main():
