@@ -12,11 +12,25 @@ import crescent
 from aiohttp import ContentTypeError, ClientSession
 from dotenv import load_dotenv
 from psnawp_api import PSNAWP
-from psnawp_api.core.psnawp_exceptions import PSNAWPNotFound
+from psnawp_api.core.psnawp_exceptions import PSNAWPNotFound, PSNAWPAuthenticationError
 
 load_dotenv('config.env')
 bot = crescent.Bot(os.getenv('TOKEN'))
 ROOT_URI = f"https://database.deta.sh/v1/{os.getenv('PROJECT_ID')}/fallout_76_db"
+
+
+async def xbox_gamertag_to_xuid(gamertag):
+    auth_headers = {"X-Authorization": os.getenv("XBOX_API")}
+    params = {'gt': gamertag}
+    # Retries the search two times before giving up.
+    for i in range(2):
+        async with aiohttp.ClientSession(headers=auth_headers) as session:
+            async with session.get('https://xbl.io/api/v2/friends/search', params=params) as resp:
+                json_response = await resp.json()
+                logger.info(f"XBOX API response {json_response}.")
+                if profile_list := json_response.get('profileUsers'):
+                    return [(profile['settings'][2]['value'], profile['id']) for profile in profile_list]
+    return None
 
 
 @bot.include
@@ -24,30 +38,16 @@ ROOT_URI = f"https://database.deta.sh/v1/{os.getenv('PROJECT_ID')}/fallout_76_db
 async def grab_xuid(ctx: crescent.Context, gamer_tag: Atd[str, "XBOX 360 GamerTag"]):
     await ctx.defer()
     logger.info(f"Received XBOX gamertag: {gamer_tag}.")
-    auth_headers = {"X-Authorization": os.getenv("XBOX_API")}
-    params = {'gt': gamer_tag}
 
     if not re.match(r"[A-Za-z0-9 ]+$", gamer_tag):
         await ctx.respond(f"{gamer_tag} is not XBOX 360 compatible GamerTag")
         return
-
-        # Retries the search two times before giving up.
-    for i in range(2):
-        try:
-            async with aiohttp.ClientSession(headers=auth_headers) as session:
-                async with session.get('https://xbl.io/api/v2/friends/search', params=params) as resp:
-                    json_response = await resp.json()
-                    logger.info(f"XBOX API response {json_response}.")
-                    if profile_list := json_response.get('profileUsers'):
-                        await ctx.respond(
-                            "\n".join(f"{profile['settings'][2]['value']}: {profile['id']}" for profile in profile_list))
-                    else:
-                        await ctx.respond(f"GamerTag {gamer_tag} not found.")
-                    break
-        except (ContentTypeError, JSONDecodeError, KeyError):
-            if i == 1:
-                await ctx.respond(f"Something wrong with XBOX API, try again later.")
-                logger.error("Something wrong with XBOX API", exc_info=True)
+    try:
+        profile_list = await xbox_gamertag_to_xuid(gamer_tag)
+        await ctx.respond('\n'.join([f"{x[0]}: {x[1]}" for x in profile_list]))
+    except (ContentTypeError, JSONDecodeError, KeyError):
+        await ctx.respond(f"Something wrong with XBOX API, try again later.")
+        logger.error("Something wrong with XBOX API", exc_info=True)
 
 
 @bot.include
@@ -77,7 +77,7 @@ async def grab_psnid(ctx: crescent.Context, gamer_tag: Atd[str, "PlayStation Gam
         await ctx.respond(f"{user.online_id}: {user.account_id}")
     except PSNAWPNotFound:
         await ctx.respond(f"GamerTag {gamer_tag} not found.")
-    except Exception:
+    except PSNAWPAuthenticationError:
         traceback.print_exc()
         await ctx.respond(traceback.format_exc(1))
 
@@ -157,14 +157,23 @@ async def grab_user_info(ctx: crescent.Context,
                          xbl: Atd[Optional[str], "XBOX 360 GamerTag"] = None,
                          xuid: Atd[Optional[str], "XBOX User ID"] = None,
                          pc: Atd[Optional[str], "Reddit Username"] = None):
+    await ctx.defer()
     if reddit is not None:
         result = await get_item(reddit.lower())
     elif psn is not None:
-        result = await query_items(key="PlayStation", value=psn)
+        try:
+            user = psnawp.user(online_id=psn)
+            result = await query_items(key="PlayStation", value=user.online_id)
+        except (PSNAWPNotFound, PSNAWPAuthenticationError):
+            result = await query_items(key="PlayStation", value=psn)
     elif psnid is not None:
         result = await query_items(key="PlayStation_ID", value=psnid)
     elif xbl is not None:
-        result = await query_items(key="XBOX", value=xbl)
+        xb_xuid = await xbox_gamertag_to_xuid(xbl)
+        if xb_xuid is not None:
+            result = await query_items(key="XBOX", value=xb_xuid[0][0])
+        else:
+            result = await query_items(key="XBOX", value=xbl)
     elif xuid is not None:
         result = await query_items(key="XBOX_ID", value=xuid)
     elif pc is not None:
