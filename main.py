@@ -16,6 +16,7 @@ from psnawp_api.core.psnawp_exceptions import PSNAWPNotFound
 
 load_dotenv('config.env')
 bot = crescent.Bot(os.getenv('TOKEN'))
+ROOT_URI = f"https://database.deta.sh/v1/{os.getenv('PROJECT_ID')}/fallout_76_db"
 
 
 @bot.include
@@ -101,20 +102,35 @@ async def psnid_to_gamertag(ctx: crescent.Context, psnid: Atd[str, "PlayStation 
 
 
 async def get_item(key: str):
-    root_uri = f"https://database.deta.sh/v1/{os.getenv('PROJECT_ID')}/fallout_76_db"
     async with ClientSession(headers={"X-API-Key": os.getenv("PROJECT_KEY"), 'Content-Type': 'application/json'}) as session:
-        async with session.get(f"{root_uri}/items/{key}") as resp:
+        async with session.get(f"{ROOT_URI}/items/{key}") as resp:
             json_data = await resp.json()
             return json_data
 
 
 async def query_items(key: str, value: str):
-    root_uri = f"https://database.deta.sh/v1/{os.getenv('PROJECT_ID')}/fallout_76_db"
     async with ClientSession(headers={"X-API-Key": os.getenv("PROJECT_KEY"), 'Content-Type': 'application/json'}) as session:
         payload = json.dumps({"query": [{key: value}], "limit": 5, "last": None})
-        async with session.post(f"{root_uri}/query", data=payload) as resp:
+        async with session.post(f"{ROOT_URI}/query", data=payload) as resp:
             json_data = await resp.json()
             return json_data.get("items")
+
+
+async def update_items(data: dict):
+    async with ClientSession(headers={"X-API-Key": os.getenv("PROJECT_KEY"), 'Content-Type': 'application/json'}) as session:
+        payload = json.dumps({"items": [data]})
+        async with session.put(f"{ROOT_URI}/items", data=payload) as resp:
+            json_data = await resp.json()
+            return json_data.get("items")
+
+
+@bot.include
+@crescent.command(description="Sets the is_blacklisted field of db to true or false.", guild=793952307103662102)
+async def set_blacklisted(ctx: crescent.Context, reddit: Atd[str, "Reddit Username"], value: Atd[bool, "Whether to set the user as blacklisted or not."]):
+    profile_data = await get_item(reddit)
+    profile_data["is_blacklisted"] = value
+    await update_items(profile_data)
+    await ctx.respond(f"u/{reddit} is_blacklisted {value}")
 
 
 @bot.include
