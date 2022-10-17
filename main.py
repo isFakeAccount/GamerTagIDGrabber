@@ -3,13 +3,12 @@ import logging
 import os
 import re
 import traceback
-from json import JSONDecodeError
 from typing import Annotated as Atd
 from typing import Optional
 
 import aiohttp
 import crescent
-from aiohttp import ContentTypeError, ClientSession
+from aiohttp import ClientSession
 from dotenv import load_dotenv
 from psnawp_api import PSNAWP
 from psnawp_api.core.psnawp_exceptions import PSNAWPNotFound, PSNAWPAuthenticationError
@@ -28,9 +27,11 @@ async def xbox_gamertag_to_xuid(gamertag):
             async with session.get('https://xbl.io/api/v2/friends/search', params=params) as resp:
                 json_response = await resp.json()
                 logger.info(f"XBOX API response {json_response}.")
+                if json_response.get('code') == 28:
+                    break
                 if profile_list := json_response.get('profileUsers'):
                     return [(profile['settings'][2]['value'], profile['id']) for profile in profile_list]
-    return None
+    return []
 
 
 @bot.include
@@ -42,12 +43,12 @@ async def grab_xuid(ctx: crescent.Context, gamer_tag: Atd[str, "XBOX 360 GamerTa
     if not re.match(r"[A-Za-z0-9 ]+$", gamer_tag):
         await ctx.respond(f"{gamer_tag} is not XBOX 360 compatible GamerTag")
         return
-    try:
-        profile_list = await xbox_gamertag_to_xuid(gamer_tag)
+
+    profile_list = await xbox_gamertag_to_xuid(gamer_tag)
+    if profile_list:
         await ctx.respond('\n'.join([f"{x[0]}: {x[1]}" for x in profile_list]))
-    except (ContentTypeError, JSONDecodeError, KeyError):
-        await ctx.respond(f"Something wrong with XBOX API, try again later.")
-        logger.error("Something wrong with XBOX API", exc_info=True)
+    else:
+        await ctx.respond(f"Could not find the gamertag {gamer_tag}")
 
 
 @bot.include
@@ -170,7 +171,7 @@ async def grab_user_info(ctx: crescent.Context,
         result = await query_items(key="PlayStation_ID", value=psnid)
     elif xbl is not None:
         xb_xuid = await xbox_gamertag_to_xuid(xbl)
-        if xb_xuid is not None:
+        if xb_xuid:
             result = await query_items(key="XBOX", value=xb_xuid[0][0])
         else:
             result = await query_items(key="XBOX", value=xbl)
@@ -197,6 +198,7 @@ if __name__ == '__main__':
     psnawp = PSNAWP(os.getenv('NPSSO_CODE'))
     logger = logging.getLogger("GammerTagIDGrabber")
     logger.setLevel(logging.DEBUG)
+    logger.propagate = False
 
     log_stream = logging.StreamHandler()
     log_stream.setLevel(logging.INFO)
