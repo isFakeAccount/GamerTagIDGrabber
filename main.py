@@ -19,7 +19,7 @@ ROOT_URI = f"https://database.deta.sh/v1/{os.getenv('PROJECT_ID')}/fallout_76_db
 
 
 async def xbox_gamertag_to_xuid(gamertag):
-    auth_headers = {"X-Authorization": os.getenv("XBOX_API")}
+    auth_headers = {"X-Authorization": os.getenv("XBOX_API"), "Content-Type": "application/json"}
     params = {'gt': gamertag}
     # Retries the search two times before giving up.
     for i in range(2):
@@ -44,11 +44,14 @@ async def grab_xuid(ctx: crescent.Context, gamer_tag: Atd[str, "XBOX 360 GamerTa
         await ctx.respond(f"{gamer_tag} is not XBOX 360 compatible GamerTag")
         return
 
-    profile_list = await xbox_gamertag_to_xuid(gamer_tag)
-    if profile_list:
-        await ctx.respond('\n'.join([f"{x[0]}: {x[1]}" for x in profile_list]))
-    else:
-        await ctx.respond(f"Could not find the gamertag {gamer_tag}")
+    try:
+        profile_list = await xbox_gamertag_to_xuid(gamer_tag)
+        if profile_list:
+            await ctx.respond('\n'.join([f"{x[0]}: {x[1]}" for x in profile_list]))
+        else:
+            await ctx.respond(f"Could not find the gamertag {gamer_tag}")
+    except aiohttp.ContentTypeError:
+        await ctx.respond(f"XBOX API Error, Try again.")
 
 
 @bot.include
@@ -170,7 +173,10 @@ async def grab_user_info(ctx: crescent.Context,
     elif psnid is not None:
         result = await query_items(key="PlayStation_ID", value=psnid)
     elif xbl is not None:
-        xb_xuid = await xbox_gamertag_to_xuid(xbl)
+        try:
+            xb_xuid = await xbox_gamertag_to_xuid(xbl)
+        except Exception:
+            xb_xuid = None
         if xb_xuid:
             result = await query_items(key="XBOX", value=xb_xuid[0][0])
         else:
