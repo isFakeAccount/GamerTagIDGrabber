@@ -89,7 +89,7 @@ async def grab_psnid(ctx: crescent.Context, gamer_tag: Atd[str, "PlayStation Gam
 @bot.include
 @crescent.command(description="Gets the gamertag from PSNID.", guild=793952307103662102)
 async def psnid_to_gamertag(ctx: crescent.Context, psnid: Atd[str, "PlayStation User ID"]):
-    if not re.match(r"\d{19}", psnid):
+    if not re.match(r"\d+", psnid):
         await ctx.respond(f"{psnid} is not correct PSN ID.")
         return
 
