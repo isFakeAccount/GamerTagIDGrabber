@@ -131,7 +131,7 @@ async def update_items(data: dict):
 @bot.include
 @crescent.command(description="Sets the is_blacklisted field of db to true or false.", guild=793952307103662102)
 async def set_blacklisted(ctx: crescent.Context, reddit: Atd[str, "Reddit Username"], value: Atd[bool, "Whether to set the user as blacklisted or not."]):
-    profile_data = await get_item(reddit)
+    profile_data = await get_item(reddit.lower())
     profile_data["is_blacklisted"] = value
     await update_items(profile_data)
     await ctx.respond(f"u/{reddit} is_blacklisted {value}")
