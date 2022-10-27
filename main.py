@@ -153,6 +153,12 @@ async def delete_reddit_user(ctx: crescent.Context, reddit: Atd[str, "Reddit Use
 
 
 @bot.include
+@crescent.command(description="Returns the fallout76marketplace profile url for the reddit user", guild=793952307103662102)
+async def grab_profile_url(ctx: crescent.Context, reddit: Atd[str, "Reddit Username"]):
+    await ctx.respond(f"https://fallout76marketplace.com/user/{reddit}")
+
+
+@bot.include
 @crescent.command(description="Grabs user info from user verification database", guild=793952307103662102)
 async def grab_user_info(ctx: crescent.Context,
                          reddit: Atd[Optional[str], "Reddit Username"] = None,
