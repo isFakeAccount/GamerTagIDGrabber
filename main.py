@@ -47,7 +47,7 @@ async def grab_xuid(ctx: crescent.Context, gamer_tag: Atd[str, "XBOX 360 GamerTa
     try:
         profile_list = await xbox_gamertag_to_xuid(gamer_tag)
         if profile_list:
-            await ctx.respond('\n'.join([f"{x[0]}: {x[1]}" for x in profile_list]))
+            await ctx.respond('\n'.join([f"`{x[0]}: {x[1]}`" for x in profile_list]))
         else:
             await ctx.respond(f"Could not find the gamertag {gamer_tag}")
     except aiohttp.ContentTypeError:
@@ -66,7 +66,7 @@ async def xuid_to_gamertag(ctx: crescent.Context, xuid: Atd[int, "XBOX User ID"]
             logger.info(f"XBOX API response {json_response}.")
             if profile_list := json_response.get('profileUsers'):
                 await ctx.respond(
-                    "\n".join(f"{profile['settings'][2]['value']}: {profile['id']}" for profile in profile_list))
+                    "\n".join(f"`{profile['settings'][2]['value']}: {profile['id']}`" for profile in profile_list))
             else:
                 await ctx.respond(f"XUID {xuid} not found.")
 
@@ -78,7 +78,7 @@ async def grab_psnid(ctx: crescent.Context, gamer_tag: Atd[str, "PlayStation Gam
     try:
         user = psnawp.user(online_id=gamer_tag)
         logger.info(f"Response PSN {user}.")
-        await ctx.respond(f"{user.online_id}: {user.account_id}")
+        await ctx.respond(f"`{user.online_id}: {user.account_id}`")
     except PSNAWPNotFound:
         await ctx.respond(f"GamerTag {gamer_tag} not found.")
     except PSNAWPAuthenticationError:
@@ -97,7 +97,7 @@ async def psnid_to_gamertag(ctx: crescent.Context, psnid: Atd[str, "PlayStation 
     try:
         user = psnawp.user(account_id=f"{psnid}")
         logger.info(f"Response PSN {user}.")
-        await ctx.respond(f"{user.online_id}: {user.account_id}")
+        await ctx.respond(f"`{user.online_id}: {user.account_id}`")
     except PSNAWPNotFound:
         await ctx.respond(f"PSNID {psnid} not found.")
     except Exception:
