@@ -21,17 +21,16 @@ ROOT_URI = f"https://database.deta.sh/v1/{os.getenv('PROJECT_ID')}/fallout_76_db
 async def xbox_gamertag_to_xuid(gamertag):
     auth_headers = {"X-Authorization": os.getenv("XBOX_API"), "Content-Type": "application/json"}
     params = {'gt': gamertag}
-    # Retries the search two times before giving up.
-    for i in range(2):
-        async with aiohttp.ClientSession(headers=auth_headers) as session:
-            async with session.get('https://xbl.io/api/v2/friends/search', params=params) as resp:
-                json_response = await resp.json()
-                logger.info(f"XBOX API response {json_response}.")
-                if json_response.get('code') == 28:
-                    break
-                if profile_list := json_response.get('profileUsers'):
-                    return [(profile['settings'][2]['value'], profile['id']) for profile in profile_list]
-    return []
+
+    async with aiohttp.ClientSession(headers=auth_headers) as session:
+        async with session.get('https://xbl.io/api/v2/friends/search', params=params) as resp:
+            json_response = await resp.json()
+            logger.info(f"XBOX API response {json_response}.")
+
+            if profile_list := json_response.get('profileUsers'):
+                return [(profile['settings'][2]['value'], profile['id']) for profile in profile_list]
+            else:
+                return []
 
 
 @bot.include
