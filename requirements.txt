@@ -14,7 +14,7 @@ hikari-crescent==0.4.0
 idna==3.4
 multidict==6.0.2
 mypy-extensions==0.4.3
-PSNAWP==1.1.0
+PSNAWP==1.2.0
 pycooldown==0.1.0b8
 python-dateutil==2.8.2
 python-dotenv==0.21.0
