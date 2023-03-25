@@ -8,13 +8,15 @@ from typing import Optional
 
 import aiohttp
 import crescent
+import hikari
 from aiohttp import ClientSession
 from dotenv import load_dotenv
 from psnawp_api import PSNAWP
 from psnawp_api.core.psnawp_exceptions import PSNAWPNotFound, PSNAWPAuthenticationError
 
 load_dotenv('config.env')
-bot = crescent.Bot(os.getenv('TOKEN'))
+bot = hikari.GatewayBot(os.getenv('TOKEN'))
+client = crescent.Client(bot)
 ROOT_URI = f"https://database.deta.sh/v1/{os.getenv('PROJECT_ID')}/fallout_76_db"
 
 
@@ -33,7 +35,7 @@ async def xbox_gamertag_to_xuid(gamertag):
                 return []
 
 
-@bot.include
+@client.include
 @crescent.command(description="To grab the XUID of XBOX user.", guild=793952307103662102)
 async def grab_xuid(ctx: crescent.Context, gamer_tag: Atd[str, "XBOX 360 GamerTag"]):
     await ctx.defer()
@@ -53,7 +55,7 @@ async def grab_xuid(ctx: crescent.Context, gamer_tag: Atd[str, "XBOX 360 GamerTa
         await ctx.respond(f"XBOX API Error, Try again.")
 
 
-@bot.include
+@client.include
 @crescent.command(description="Gets the GamerTag from XUID", guild=793952307103662102)
 async def xuid_to_gamertag(ctx: crescent.Context, xuid: Atd[int, "XBOX User ID"]):
     await ctx.defer()
@@ -70,7 +72,7 @@ async def xuid_to_gamertag(ctx: crescent.Context, xuid: Atd[int, "XBOX User ID"]
                 await ctx.respond(f"XUID {xuid} not found.")
 
 
-@bot.include
+@client.include
 @crescent.command(description="To grab the PSNID of PSN user.", guild=793952307103662102)
 async def grab_psnid(ctx: crescent.Context, gamer_tag: Atd[str, "PlayStation GamerTag"]):
     logger.info(f"Received PSN gamertag: {gamer_tag}.")
@@ -85,7 +87,7 @@ async def grab_psnid(ctx: crescent.Context, gamer_tag: Atd[str, "PlayStation Gam
         await ctx.respond(traceback.format_exc(1))
 
 
-@bot.include
+@client.include
 @crescent.command(description="Gets the gamertag from PSNID.", guild=793952307103662102)
 async def psnid_to_gamertag(ctx: crescent.Context, psnid: Atd[str, "PlayStation User ID"]):
     if not re.match(r"\d+", psnid):
@@ -127,7 +129,7 @@ async def update_items(data: dict):
             return json_data.get("items")
 
 
-@bot.include
+@client.include
 @crescent.command(description="Sets the is_blacklisted field of db to true or false.", guild=793952307103662102)
 async def set_blacklisted(ctx: crescent.Context, reddit: Atd[str, "Reddit Username"], value: Atd[bool, "Whether to set the user as blacklisted or not."]):
     profile_data = await get_item(reddit.lower())
@@ -136,7 +138,7 @@ async def set_blacklisted(ctx: crescent.Context, reddit: Atd[str, "Reddit Userna
     await ctx.respond(f"u/{reddit} is_blacklisted {value}")
 
 
-@bot.include
+@client.include
 @crescent.command(description="Deletes the Reddit user from database. Use this command with caution.", guild=793952307103662102)
 async def delete_reddit_user(ctx: crescent.Context, reddit: Atd[str, "Reddit Username"]):
     root_uri = f"https://database.deta.sh/v1/{os.getenv('PROJECT_ID')}/fallout_76_db"
@@ -151,13 +153,13 @@ async def delete_reddit_user(ctx: crescent.Context, reddit: Atd[str, "Reddit Use
             await ctx.respond(formatted_json)
 
 
-@bot.include
+@client.include
 @crescent.command(description="Returns the fallout76marketplace profile url for the reddit user", guild=793952307103662102)
 async def grab_profile_url(ctx: crescent.Context, reddit: Atd[str, "Reddit Username"]):
     await ctx.respond(f"https://fallout76marketplace.com/user/{reddit}")
 
 
-@bot.include
+@client.include
 @crescent.command(description="Grabs user info from user verification database", guild=793952307103662102)
 async def grab_user_info(ctx: crescent.Context,
                          reddit: Atd[Optional[str], "Reddit Username"] = None,
