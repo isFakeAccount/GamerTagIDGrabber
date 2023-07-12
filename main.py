@@ -14,8 +14,8 @@ from dotenv import load_dotenv
 from psnawp_api import PSNAWP
 from psnawp_api.core.psnawp_exceptions import PSNAWPNotFound, PSNAWPAuthenticationError
 
-load_dotenv('config.env')
-bot = hikari.GatewayBot(os.getenv('TOKEN'))
+load_dotenv()
+bot = hikari.GatewayBot(os.getenv('DISCORD_TOKEN'))
 client = crescent.Client(bot)
 ROOT_URI = f"https://database.deta.sh/v1/{os.getenv('PROJECT_ID')}/fallout_76_db"
 
