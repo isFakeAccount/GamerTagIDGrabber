@@ -1,0 +1,14 @@
+[Unit]
+Description=Runs GamerTagIDGrabber
+After=network-online.target
+Requires=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/Bots/GamerTagIDGrabber
+ExecStart=/root/Bots/GamerTagIDGrabber/main.py
+Restart=always
+RestartSec=15s
+
+[Install]
+WantedBy=multi-user.target
