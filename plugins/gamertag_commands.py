@@ -1,5 +1,6 @@
 import traceback
 from dataclasses import dataclass
+from logging import getLogger
 from os import getenv
 from typing import Literal
 from urllib.parse import quote
@@ -16,6 +17,7 @@ plugin = crescent.Plugin[hikari.GatewayBot, None]()
 xbox_group = crescent.Group("xbox")
 xbox_legacy = crescent.Group(name="xbox_legacy")
 playstation_group = crescent.Group("playstation")
+gamertag_logger = getLogger("gamertag_id_grabber")
 
 
 def format_with_ansi(text: str, color_code: int) -> str:
@@ -65,6 +67,7 @@ class XUID:
     gamer_tag = crescent.option(str, description="XBOX GamerTag")
 
     async def callback(self, ctx: crescent.Context) -> None:
+        gamertag_logger.info(f"xbox get_xuid: {self.gamer_tag}")
         await ctx.defer()
         profile_list = await self.xbox_gamertag_to_xuid(self.gamer_tag)
         tmp = "".join(profile_list) if len(profile_list) else f"Could not find gamertag {self.gamer_tag}."
@@ -103,6 +106,7 @@ class XUID360:
     gamer_tag = crescent.option(str, description="XBOX 360 GamerTag")
 
     async def callback(self, ctx: crescent.Context) -> None:
+        gamertag_logger.info(f"xbox_legacy get_xuid: {self.gamer_tag}")
         await ctx.defer()
         profile_list = await self.xbox_gamertag_to_xuid(self.gamer_tag)
         tmp = "".join(profile_list) if len(profile_list) else f"Could not find gamertag {self.gamer_tag}."
@@ -141,6 +145,7 @@ class XBOXGamerTag:
     xuid = crescent.option(int, description="XBOX User ID")
 
     async def callback(self, ctx: crescent.Context) -> None:
+        gamertag_logger.info(f"xbox get_gamertag: {self.xuid}")
         await ctx.defer()
         auth_headers = {"X-Authorization": getenv("OPENXBL_API", "OPENXBL_API"), "Content-Type": "application/json"}
         async with (
@@ -174,6 +179,7 @@ class PSNID:
     gamer_tag = crescent.option(str, description="PlayStation GamerTag")
 
     async def callback(self, ctx: crescent.Context) -> None:
+        gamertag_logger.info(f"playstation get_psnid: {self.gamer_tag}")
         await ctx.defer()
         try:
             psnawp = PSNAWP(getenv("NPSSO_CODE", "NPSSO_CODE"))
@@ -194,6 +200,7 @@ class PlayStationGamerTag:
     psnid = crescent.option(int, description="PlayStation User ID")
 
     async def callback(self, ctx: crescent.Context) -> None:
+        gamertag_logger.info(f"playstation get_gamertag: {self.psnid}")
         await ctx.defer()
         try:
             psnawp = PSNAWP(getenv("NPSSO_CODE", "NPSSO_CODE"))
