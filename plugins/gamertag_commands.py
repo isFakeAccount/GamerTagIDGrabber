@@ -178,7 +178,7 @@ class PSNID:
         try:
             psnawp = PSNAWP(getenv("NPSSO_CODE", "NPSSO_CODE"))
             user = psnawp.user(online_id=self.gamer_tag)
-            tmp = str(GamerTag(username=user.online_id, platform="PlayStation", user_id=user.account_id, display_name=user.online_id))
+            tmp = str(GamerTag(username=self.gamer_tag, platform="PlayStation", user_id=user.account_id, display_name=user.online_id))
             await ctx.respond(f"```ansi\n{tmp}```")
         except PSNAWPNotFound:
             await ctx.respond(f"Could not find gamertag {self.gamer_tag}.")
