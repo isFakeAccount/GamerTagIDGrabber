@@ -142,10 +142,14 @@ class XUID360:
 @xbox_group.child
 @crescent.command(name="get_gamertag", description="Get XBOX Gamertag from XUID", guild=793952307103662102)
 class XBOXGamerTag:
-    xuid = crescent.option(int, description="XBOX User ID")
+    xuid = crescent.option(str, description="XBOX User ID")
 
     async def callback(self, ctx: crescent.Context) -> None:
         gamertag_logger.info(f"xbox get_gamertag: {self.xuid}")
+        if not self.xuid.isdigit():
+            await ctx.respond("Incorrect XUID format provided.")
+            return None
+
         await ctx.defer()
         auth_headers = {"X-Authorization": getenv("OPENXBL_API", "OPENXBL_API"), "Content-Type": "application/json"}
         async with (
@@ -197,14 +201,18 @@ class PSNID:
 @playstation_group.child
 @crescent.command(name="get_gamertag", description="Get PlayStation Gamertag from PSNID", guild=793952307103662102)
 class PlayStationGamerTag:
-    psnid = crescent.option(int, description="PlayStation User ID")
+    psnid = crescent.option(str, description="PlayStation User ID")
 
     async def callback(self, ctx: crescent.Context) -> None:
         gamertag_logger.info(f"playstation get_gamertag: {self.psnid}")
+        if not self.psnid.isdigit():
+            await ctx.respond("Incorrect PSNID format provided.")
+            return None
+
         await ctx.defer()
         try:
             psnawp = PSNAWP(getenv("NPSSO_CODE", "NPSSO_CODE"))
-            user = psnawp.user(account_id=f"{self.psnid}")
+            user = psnawp.user(account_id=self.psnid)
             tmp = str(GamerTag(username=user.online_id, platform="PlayStation", user_id=user.account_id, display_name=user.online_id))
             await ctx.respond(f"```ansi\n{tmp}```")
         except PSNAWPNotFound:
