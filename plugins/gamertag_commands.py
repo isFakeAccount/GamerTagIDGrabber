@@ -176,6 +176,21 @@ class XBOXGamerTag:
                 await ctx.respond(f"XUID {self.xuid} not found.")
 
 
+npsso_code = getenv("NPSSO_CODE", "NPSSO_CODE")
+
+
+@plugin.include
+@playstation_group.child
+@crescent.command(name="set_npsso_cookie", description="Set NPSSO Cookie for PlayStation API", guild=793952307103662102)
+class NPSSO:
+    npsso_cookie = crescent.option(str, description="PlayStation NPSSO Cookie")
+
+    async def callback(self, ctx: crescent.Context) -> None:
+        global npsso_code
+        npsso_code = self.npsso_cookie
+        await ctx.respond("NPSSO cookie is now updated.")
+
+
 @plugin.include
 @playstation_group.child
 @crescent.command(name="get_psnid", description="Get PSNID of PlayStation Gamertag", guild=793952307103662102)
@@ -186,7 +201,7 @@ class PSNID:
         gamertag_logger.info(f"playstation get_psnid: {self.gamer_tag}")
         await ctx.defer()
         try:
-            psnawp = PSNAWP(getenv("NPSSO_CODE", "NPSSO_CODE"))
+            psnawp = PSNAWP(npsso_code)
             user = psnawp.user(online_id=self.gamer_tag)
             tmp = str(GamerTag(username=self.gamer_tag, platform="PlayStation", user_id=user.account_id, display_name=user.online_id))
             await ctx.respond(f"```ansi\n{tmp}```")
@@ -211,7 +226,7 @@ class PlayStationGamerTag:
 
         await ctx.defer()
         try:
-            psnawp = PSNAWP(getenv("NPSSO_CODE", "NPSSO_CODE"))
+            psnawp = PSNAWP(npsso_code)
             user = psnawp.user(account_id=self.psnid)
             tmp = str(GamerTag(username=user.online_id, platform="PlayStation", user_id=user.account_id, display_name=user.online_id))
             await ctx.respond(f"```ansi\n{tmp}```")
