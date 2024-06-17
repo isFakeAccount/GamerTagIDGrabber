@@ -9,7 +9,7 @@ import crescent
 import hikari
 from aiohttp import ClientSession
 from psnawp_api import PSNAWP
-from psnawp_api.core.psnawp_exceptions import PSNAWPAuthenticationError, PSNAWPNotFound
+from psnawp_api.core import PSNAWPAuthenticationError, PSNAWPNotFound
 
 from .openxbl_types import People, ProfileUser
 
