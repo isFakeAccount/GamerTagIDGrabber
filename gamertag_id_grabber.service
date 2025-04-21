@@ -1,14 +1,14 @@
 [Unit]
 Description=Runs GamerTagIDGrabber
-After=network-online.target
-Requires=network-online.target
+After=default.target
 
 [Service]
 Type=simple
-WorkingDirectory=/root/Bots/GamerTagIDGrabber
-ExecStart=/root/Bots/GamerTagIDGrabber/main.py
+ExecStartPre=/bin/sh -c 'until ping -c1 google.com; do sleep 1; done;'
+WorkingDirectory=%h/Programming/Bots/GamerTagIDGrabber
+ExecStart=%h/Programming/Bots/GamerTagIDGrabber/main.py
 Restart=always
 RestartSec=15s
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
