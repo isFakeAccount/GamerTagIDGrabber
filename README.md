@@ -9,7 +9,7 @@
 
 ## Prerequisites
 
-* **Python 3.10+**
+* **Python 3.11+**
 * A **Discord Bot Token**
 * An **OpenXBL API Token**
 * An **NPSSO Code**
