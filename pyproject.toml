@@ -1,3 +1,18 @@
+[project]
+name = "gamertagidgrabber"
+version = "0.1.0"
+description = "Discord Bot to grab XBOX/Playstation Gamertag ID from Gamertags and vice versa."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "hikari-crescent>=1.2.0",
+    "psnawp>=2.2.0",
+    "python-dotenv>=1.1.0",
+]
+
+[dependency-groups]
+dev = ["black>=25.1.0", "mypy>=1.15.0", "pyright>=1.1.400", "ruff>=0.11.9"]
+
 [tool.mypy]
 strict = true
 check_untyped_defs = true
